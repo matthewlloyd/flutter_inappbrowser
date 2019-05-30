@@ -3,6 +3,7 @@ package com.pichillilorenzo.flutter_inappbrowser.InAppWebView;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Picture;
 import android.os.Build;
 import android.util.AttributeSet;
@@ -31,15 +32,15 @@ import java.util.List;
 import java.util.Map;
 
 import io.flutter.plugin.common.MethodChannel;
+import io.flutter.plugin.common.PluginRegistry;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
-
-import static com.pichillilorenzo.flutter_inappbrowser.InAppBrowserFlutterPlugin.registrar;
 
 public class InAppWebView extends WebView {
 
   static final String LOG_TAG = "InAppWebView";
 
+  public PluginRegistry.Registrar registrar;
   public InAppBrowserActivity inAppBrowserActivity;
   public FlutterWebView flutterWebView;
   int id;
@@ -90,8 +91,9 @@ public class InAppWebView extends WebView {
     super(context, attrs, defaultStyle);
   }
 
-  public InAppWebView(Context context, Object obj, int id, InAppWebViewOptions options) {
-    super(context);
+  public InAppWebView(PluginRegistry.Registrar registrar, Object obj, int id, InAppWebViewOptions options) {
+    super(registrar.activeContext());
+    this.registrar = registrar;
     if (obj instanceof InAppBrowserActivity)
       this.inAppBrowserActivity = (InAppBrowserActivity) obj;
     else if (obj instanceof FlutterWebView)
@@ -159,6 +161,8 @@ public class InAppWebView extends WebView {
     settings.setJavaScriptEnabled(options.javaScriptEnabled);
     settings.setJavaScriptCanOpenWindowsAutomatically(options.javaScriptCanOpenWindowsAutomatically);
     settings.setBuiltInZoomControls(options.builtInZoomControls);
+    settings.setDisplayZoomControls(options.displayZoomControls);
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       settings.setSafeBrowsingEnabled(options.safeBrowsingEnabled);
 
@@ -183,6 +187,10 @@ public class InAppWebView extends WebView {
     settings.setUseWideViewPort(options.useWideViewPort);
     settings.setSupportZoom(options.supportZoom);
     settings.setTextZoom(options.textZoom);
+
+    if (options.transparentBackground) {
+      setBackgroundColor(Color.TRANSPARENT);
+    }
   }
 
   public void loadUrl(String url, MethodChannel.Result result) {
@@ -307,6 +315,9 @@ public class InAppWebView extends WebView {
     if (newOptionsMap.get("builtInZoomControls") != null && options.builtInZoomControls != newOptions.builtInZoomControls)
       settings.setBuiltInZoomControls(newOptions.builtInZoomControls);
 
+    if (newOptionsMap.get("displayZoomControls") != null && options.displayZoomControls != newOptions.displayZoomControls)
+      settings.setDisplayZoomControls(newOptions.displayZoomControls);
+
     if (newOptionsMap.get("safeBrowsingEnabled") != null && options.safeBrowsingEnabled != newOptions.safeBrowsingEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
       settings.setSafeBrowsingEnabled(newOptions.safeBrowsingEnabled);
 
@@ -335,6 +346,14 @@ public class InAppWebView extends WebView {
 
     if (newOptionsMap.get("textZoom") != null && options.textZoom != newOptions.textZoom)
       settings.setTextZoom(newOptions.textZoom);
+
+    if (newOptionsMap.get("transparentBackground") != null && options.transparentBackground != newOptions.transparentBackground) {
+      if (newOptions.transparentBackground) {
+        setBackgroundColor(Color.TRANSPARENT);
+      } else {
+        setBackgroundColor(Color.parseColor("#FFFFFF"));
+      }
+    }
 
     options = newOptions;
   }
